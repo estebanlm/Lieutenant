@@ -1,148 +1,174 @@
 "
-Contrary to Commander, a command can be customised at the moment of use.
-Hence even though the class describing a command define an iconName/name/shortcut, when creating the command such information can be overloaded. 
+I'm a base command. 
+I define basic behaviour. 
 
-A command may have an icon or not (message noIcon/useIcon)
-Then when it has an icon it can be defined statically as a class method, or customized on the spot.
-
-[[[
-LtOpenCommandForTest new
-]]]
-   
-[[[
-LtOpenCommandForTest new			
-	name: 'on the fly';
-   shortkey: 'A'
-]]]
-
-Questions: 
-
-- May be this logic can be simplified. For now make it works.
-- Why canBeExecutedInContext: aToolContext is a class method?
+My children should implement #execute.
 "
 Class {
 	#name : #LtCommand,
 	#superclass : #Object,
 	#instVars : [
+		'group',
 		'name',
 		'description',
-		'hasIcon',
+		'icon',
 		'iconName',
-		'shortcutKey'
+		'shortcut'
 	],
-	#category : #Lieutenant
+	#classInstVars : [
+		'uniqueInstance'
+	],
+	#category : #'Lieutenant-Base'
 }
 
-{ #category : #default }
-LtCommand class >> defaultCommandName [ 
+{ #category : #accessing }
+LtCommand class >> activations [
+	"Answer a list of possible activations"
 
-	^ 'Unnamed'
-]
-
-{ #category : #default }
-LtCommand class >> defaultDescription [
-	^ 'I''m a little command and I should provide a nice description for my user.'
-]
-
-{ #category : #default }
-LtCommand class >> defaultIconName [
-	"nil is not really nice but it indicates that by default the command does not have an icon."
-
-	^ nil
+	^ #()
 ]
 
 { #category : #accessing }
-LtCommand class >> defaultShortcutKey [
- 	^ 'O'
+LtCommand class >> allAvailable [
+
+	^ (self allSubclasses 
+		reject: #isAbstract)
+		collect: #uniqueInstance
 ]
 
-{ #category : #execution }
-LtCommand >> applyResultIn: aTool [
-	"Third and final step of a command application: its impact on the tool that invoked it. By default do nothing."
-	
-	^ self
-	
+{ #category : #accessing }
+LtCommand class >> allAvailableFor: anObject [
+
+	^ self allAvailable
+		select: [ :each | anObject handlesCommand: each ]
 ]
 
-{ #category : #testing }
-LtCommand >> canBeExecutedIn: anObject [
-	"Specify whether the command can be executed. Usually a presenter will invoke this method with itself or an object representing a selection context"
-	
-	^ true
+{ #category : #'instance creation' }
+LtCommand class >> new [
+
+	self error: 'Use #uniqueInstance'
 ]
 
-{ #category : #configuration }
-LtCommand >> configureYourselfFrom: aPresenter [
-	"Hook - This method is invoked by the command manager (a command executor) to let the command configure itself using information provided by aPresenter.	By default do nothing"
+{ #category : #utilities }
+LtCommand class >> reset [ 
+
+	uniqueInstance := nil
+]
+
+{ #category : #utilities }
+LtCommand class >> resetAll [ 
+	<script> 
+
+	self allSubclassesDo: #reset.
+]
+
+{ #category : #'instance creation' }
+LtCommand class >> uniqueInstance [
+
+	self isAbstract ifTrue: [ 
+		self error: 'I''m abstract. You cannot use me direction.' ].
+	^ uniqueInstance ifNil: [ uniqueInstance := self basicNew initialize ]	
+]
+
+{ #category : #'accessing activations' }
+LtCommand >> activationLike: aBlock [
+
+	^ self class activations 
+		detect: aBlock 
+		ifNone: [ nil ]
+]
+
+{ #category : #converting }
+LtCommand >> asMenuItemPresenter [
+
+	^ MenuItemPresenter new 
+		name: self name;
+		shortcut: self shortcut;
+		action: [ self execute ];
+		yourself
+]
+
+{ #category : #converting }
+LtCommand >> asToolBarButton [
 	
+	^ ToolBarButton new 
+		label: self name;
+		icon: self icon;
+		help: self description;
+		action: [ self execute ];
+		yourself
 ]
 
 { #category : #accessing }
 LtCommand >> description [
 
-	^ description ifNil: [ description := self class defaultDescription ]
+	^ description
 ]
 
 { #category : #accessing }
 LtCommand >> description: aString [
 
-	description := aString 
-]
-
-{ #category : #icons }
-LtCommand >> ensureIcon [
-	"Force to return an icon. By default when there is no icon returns an error."
-	
-	^self iconName ifNil: [ self iconNamed: #error ]
+	description := aString
 ]
 
 { #category : #execution }
-LtCommand >> execute [
-	"The execution of a command is in fact a three steps processs: 1 adaptation of the command to the current state of tool, 2 the execution (this method) and 3 the application of the results to the tool that invoked the command. By default do nothing."
-	
-	^ self 
+LtCommand >> execute [ 
+	"Do nothing"
 ]
 
-{ #category : #testing }
-LtCommand >> hasIcon [
-	"Returns true when the command defines an icon name. Not all the commands are required to have icon."
-	
-	^ hasIcon
+{ #category : #accessing }
+LtCommand >> group [
+
+	^ group
 ]
 
-{ #category : #icons }
+{ #category : #accessing }
+LtCommand >> group: aGroup [
+
+	group := aGroup
+]
+
+{ #category : #'accessing activations' }
+LtCommand >> hasActivationLike: aBlock [
+
+	^ (self activationLike: aBlock) notNil
+]
+
+{ #category : #accessing }
 LtCommand >> icon [
-	"Precondition: do not call icon on receiver not having an icon."
-	"It may be better to have iconNamed:ifNone: in addition to iconNamed: in superclass."
-	^ self iconNamed: self iconName
+
+	^ self iconName ifNotNil: [ :aName | 
+		self iconNamed: aName asSymbol ]
 ]
 
 { #category : #accessing }
 LtCommand >> iconName [
-	"Return the name of an icon, when the command is supposed to have one, nil otherwise"
 	
-	^ hasIcon 
-		ifFalse: [ nil "we could also raise an error but we should check the impact" ]
-		ifTrue: [ iconName isNil 
-						ifTrue: [ iconName := self class defaultIconName ].
-					iconName ]
-	
+	^ iconName
 ]
 
 { #category : #accessing }
-LtCommand >> iconName: aSymbol [ 
-	iconName := aSymbol
+LtCommand >> iconName: aString [
+	
+	iconName := aString
 ]
 
-{ #category : #initialization }
-LtCommand >> initialize [ 
-	
-	hasIcon := true
+{ #category : #testing }
+LtCommand >> isEnabledOn: anObject [
+
+	^ self isVisibleOn: anObject
+]
+
+{ #category : #testing }
+LtCommand >> isVisibleOn: anObject [
+
+	^ true
 ]
 
 { #category : #accessing }
 LtCommand >> name [
-	^name ifNil: [ name := self class defaultCommandName ]
+
+	^ name
 ]
 
 { #category : #accessing }
@@ -151,32 +177,20 @@ LtCommand >> name: aString [
 	name := aString
 ]
 
-{ #category : #icons }
-LtCommand >> noIcon [
-	hasIcon := false
-]
+{ #category : #printing }
+LtCommand >> printOn: stream [ 
 
-{ #category : #execution }
-LtCommand >> prepareForExecutionIn: aTool [
-	"Hook - Just before the execution a command may need to perform some actions such as requesting a value from the user. By default do nothing"
-	
-	^ self
-	
+	stream << 'Command: ' << self name
 ]
 
 { #category : #accessing }
-LtCommand >> shortcutKey [
-	"it is probably bad and we should store something else"
-	
-	^ shortcutKey ifNil: [ shortcutKey := self class defaultShortcutKey ]
+LtCommand >> shortcut [
+
+	^ shortcut
 ]
 
 { #category : #accessing }
-LtCommand >> shortcutKey: aString [
- 	shortcutKey := aString 
-]
+LtCommand >> shortcut: aShortcut [
 
-{ #category : #icons }
-LtCommand >> useIcon [
-	hasIcon := true
+	shortcut := aShortcut
 ]
