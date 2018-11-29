@@ -8,7 +8,7 @@ Class {
 	#name : #LtCommand,
 	#superclass : #Object,
 	#instVars : [
-		'group',
+		'groups',
 		'name',
 		'description',
 		'icon',
@@ -31,43 +31,21 @@ LtCommand class >> activations [
 { #category : #accessing }
 LtCommand class >> allAvailable [
 
-	^ (self allSubclasses 
-		reject: #isAbstract)
-		collect: #uniqueInstance
+	^ self allSubclasses 
+		reject: #isAbstract
+		thenCollect: #new
 ]
 
 { #category : #accessing }
-LtCommand class >> allAvailableFor: anObject [
+LtCommand class >> allMatching: aBlock [
 
-	^ self allAvailable
-		select: [ :each | anObject handlesCommand: each ]
+	^ self allAvailable select: aBlock
 ]
 
-{ #category : #'instance creation' }
-LtCommand class >> new [
+{ #category : #testing }
+LtCommand class >> isAbstract [ 
 
-	self error: 'Use #uniqueInstance'
-]
-
-{ #category : #utilities }
-LtCommand class >> reset [ 
-
-	uniqueInstance := nil
-]
-
-{ #category : #utilities }
-LtCommand class >> resetAll [ 
-	<script> 
-
-	self allSubclassesDo: #reset.
-]
-
-{ #category : #'instance creation' }
-LtCommand class >> uniqueInstance [
-
-	self isAbstract ifTrue: [ 
-		self error: 'I''m abstract. You cannot use me direction.' ].
-	^ uniqueInstance ifNil: [ uniqueInstance := self basicNew initialize ]	
+	^ self = LtCommand
 ]
 
 { #category : #'accessing activations' }
@@ -76,6 +54,13 @@ LtCommand >> activationLike: aBlock [
 	^ self class activations 
 		detect: aBlock 
 		ifNone: [ nil ]
+]
+
+{ #category : #accessing }
+LtCommand >> addGroup: aCommandGroup [
+
+	groups ifNil: [ groups := #() ].
+	groups := groups copyWith: aCommandGroup
 ]
 
 { #category : #converting }
@@ -117,21 +102,21 @@ LtCommand >> execute [
 ]
 
 { #category : #accessing }
-LtCommand >> group [
+LtCommand >> groups [
 
-	^ group
-]
-
-{ #category : #accessing }
-LtCommand >> group: aGroup [
-
-	group := aGroup
+	^ groups ifNil: [ #() ]
 ]
 
 { #category : #'accessing activations' }
 LtCommand >> hasActivationLike: aBlock [
 
 	^ (self activationLike: aBlock) notNil
+]
+
+{ #category : #testing }
+LtCommand >> hasGroup: aGroup [ 
+
+	^ self groups includes: aGroup
 ]
 
 { #category : #accessing }
@@ -163,6 +148,13 @@ LtCommand >> isEnabledOn: anObject [
 LtCommand >> isVisibleOn: anObject [
 
 	^ true
+]
+
+{ #category : #accessing }
+LtCommand >> mainGroup [
+	"While a command can belong to different groups, it will have just one main group (the first)"
+
+	^ groups ifNotNil: [ groups first ]
 ]
 
 { #category : #accessing }

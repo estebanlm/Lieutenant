@@ -5,7 +5,8 @@ Class {
 	#name : #LtCommandActivationBuilder,
 	#superclass : #Object,
 	#instVars : [
-		'owner'
+		'owner',
+		'matchingBlock'
 	],
 	#category : #'Lieutenant-Builder'
 }
@@ -34,8 +35,20 @@ LtCommandActivationBuilder >> activationSelectionOf: anObject [
 { #category : #accessing }
 LtCommandActivationBuilder >> commands [
 
-	^ (LtCommand allAvailableFor: self owner) 
+	^ (LtCommand allMatching: self matching)
 		select: [ :each | each hasActivationLike: self activationSelection ]
+]
+
+{ #category : #private }
+LtCommandActivationBuilder >> matching [
+
+	^ matchingBlock ifNil: [ [ :aCommand | true ] ]
+]
+
+{ #category : #accessing }
+LtCommandActivationBuilder >> matching: aBlock [
+
+	matchingBlock := aBlock
 ]
 
 { #category : #accessing }

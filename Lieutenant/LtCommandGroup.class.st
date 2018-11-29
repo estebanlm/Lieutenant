@@ -30,7 +30,7 @@ LtCommandGroup class >> uniqueInstance [
 { #category : #accessing }
 LtCommandGroup >> commands [ 
 
-	^ LtCommand allAvailable select: [ :each | each group = self ]
+	^ LtCommand allAvailable select: [ :each | each groups includes: self ]
 ]
 
 { #category : #accessing }

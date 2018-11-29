@@ -17,11 +17,11 @@ LtMenuBarBuilder >> activationSelection [
 LtMenuBarBuilder >> build [ 
 
 	^ MenuBarPresenter new addGroup: [ :group |
-		(self commands groupedBy: #group) keysAndValuesDo: [ :eachGroup :items |
+		(self commands groupedBy: #mainGroup) keysAndValuesDo: [ :eachGroup :items |
 			group addItem: [ :item |
 				item 
 					name: eachGroup name;
-					subMenu: (self buildMenuFor: eachGroup items: items) ] ] ]
+					subMenu: (self buildMenu: items) ] ] ]
 ]
 
 { #category : #building }
@@ -34,7 +34,7 @@ LtMenuBarBuilder >> buildItem: item command: aCommand [
 ]
 
 { #category : #building }
-LtMenuBarBuilder >> buildMenuFor: aGroup items: items [ 
+LtMenuBarBuilder >> buildMenu: items [ 
 	| menuPresenter |
 	
 	menuPresenter := MenuPresenter new.
