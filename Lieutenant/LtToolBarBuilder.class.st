@@ -23,7 +23,9 @@ LtToolBarBuilder >> build [
 		keysAndValuesDo: [ :position :items | 
 			(self sortByOrder: items) do: [ :each | 
 				toolBar 
-					addItem: each asToolBarButton 
+					addItem: (each asToolBarButton
+						action: [ each executeOn: self newContext ];
+						yourself) 
 					position: position ] ].
 	 
 	^ toolBar	
@@ -34,4 +36,12 @@ LtToolBarBuilder >> commands [
 
 	^ super commands select: [ :each | 
 		each isVisibleOn: self owner ]
+]
+
+{ #category : #factory }
+LtToolBarBuilder >> newContext [
+
+	^ LtCommandContext new 
+		owner: self owner;
+		yourself
 ]

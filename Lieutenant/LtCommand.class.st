@@ -13,7 +13,8 @@ Class {
 		'description',
 		'icon',
 		'iconName',
-		'shortcut'
+		'shortcut',
+		'context'
 	],
 	#classInstVars : [
 		'uniqueInstance'
@@ -99,6 +100,14 @@ LtCommand >> description: aString [
 { #category : #execution }
 LtCommand >> execute [ 
 	"Do nothing"
+]
+
+{ #category : #execution }
+LtCommand >> executeOn: aContext [
+
+	context := aContext.
+	[ self execute ]
+	ensure: [ context := nil ]
 ]
 
 { #category : #accessing }
