@@ -17,8 +17,8 @@ LtToolBarBuilder >> activationSelection [
 LtToolBarBuilder >> build [ 
 	| toolBar |
 
-	self flag: #TODO. "icons/text/both needs to come from application configuration"
-	toolBar := ToolBarPresenter new beBoth.
+	toolBar := ToolBarPresenter new.
+	toolBar beIcons.
 	(self commands groupedBy: [ :each | (self activationSelectionOf: each) position ]) 
 		keysAndValuesDo: [ :position :items | 
 			(self sortByOrder: items) do: [ :each | 
@@ -27,7 +27,7 @@ LtToolBarBuilder >> build [
 						action: [ each executeOn: self newContext ];
 						yourself) 
 					position: position ] ].
-	 
+
 	^ toolBar	
 ]
 
